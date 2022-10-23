@@ -1,0 +1,27 @@
+title: $:/plugins/EvidentlyCube/AdvancedPerformance/footer
+tags: $:/tags/PageTemplate
+
+<style>
+#ec_ap-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    padding: 4px;
+    border-top: 1px solid #888;
+    height: 24px;
+    line-height: 16px;
+    box-sizing: border-box;
+}
+.ec_ap-muted {
+    font-style: italic;
+    color: #888;
+}
+.tc-drafts-list {
+    bottom: 24px;
+}
+</style>
+<div id="ec_ap-footer">
+O HAI
+</div>
