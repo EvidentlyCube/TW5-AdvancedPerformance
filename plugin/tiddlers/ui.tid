@@ -1,0 +1,112 @@
+title: $:/plugins/EvidentlyCube/AdvancedPerformance/footer
+tags: $:/tags/PageTemplate
+
+<style>
+#ec_ap-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    padding: 4px;
+    border-top: 1px solid #888;
+    height: 24px;
+    line-height: 16px;
+    box-sizing: border-box;
+	display: flex;
+	justify-content: space-around;
+}
+.ec_ap-muted {
+    font-style: italic;
+    color: #888;
+}
+.tc-drafts-list {
+    bottom: 24px;
+}
+#ec_ap-wrap {
+	display: none;
+	background: rgba(200, 200, 200, 0.75);
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	box-sizing: border-box;
+	padding: 2em;
+}
+#ec_ap-container {
+	width: 100%;
+    height: 100%;
+    margin: auto;
+    background: #EEE;
+    max-width: 1024px;
+    box-sizing: border-box;
+    border-radius: 2em;
+	display: flex;
+	flex-direction: column;
+}
+#ec_ap-container > h1 {
+	padding: 1em;
+	margin: 0;
+}
+#ec_ap-tab-headers {
+	display: flex;
+	margin: auto;
+	width: 100%;
+}
+#ec_ap-tab-headers > div{
+	flex: 1 0 50%;
+	text-align: center;
+	font-size: 20px;
+	background: #EEE;
+	line-height: 30px;
+	vertical-align: middle;
+}
+#ec_ap-tab-headers > div.selected {
+	background: #FFF;
+}
+#ec_ap-tabs {
+	background: #FFF;
+	flex-grow: 1;
+	padding: 1em;
+
+}
+</style>
+<div id="ec_ap-footer">
+	<div>
+		<strong>Last refresh:</strong> <span id="ec_ap-last-refresh"></span>
+	</div>
+	<div>
+		<strong>Time taken:</strong> <span id="ec_ap-total-time"></span> <span id="ec_ap-times" class="ec_ap-muted"></span>
+	</div>
+	<div>
+		<strong>Tiddlers refreshed:</strong> <span id="ec_ap-tiddlers"></span> <span class="ec_ap-muted">(
+			<span id="ec_ap-tiddlers-temp"></span>,
+			<span id="ec_ap-tiddlers-state"></span>,
+			<span id="ec_ap-tiddlers-system"></span>,
+			<span id="ec_ap-tiddlers-main"></span>
+		)</span>
+	</div>
+	<a id="ec_ap-show-details" href="#">Show details</a>
+</div>
+<div id="ec_ap-wrap">
+<div id="ec_ap-container">
+	<h1>Performance reports:</h1>
+	<div id="ec_ap-tab-headers">
+		<div class="ec_ap-tab-header selected" data-for="ec_ap-tab--refresh-logs">Refresh logs</div>
+		<div class="ec_ap-tab-header" data-for="ec_ap-tab--filter-logs">Filter logs</div>
+	</div>
+	<div id="ec_ap-tabs">
+		<div class="ec_ap-tab--refresh-logs">
+			<h2>Latest page refreshes</h2>
+		</div>
+		<div class="ec_ap-tab--filter-logs">
+			<h2>Most used filters</h2>
+			<h2>Single longest execution</h2>
+			<h2>Total longest execution</h2>
+			<h2>Longest average execution</h2>
+			<h2>Longest median execution</h2>
+		</div>
+	</div>
+</div>
+</div>
