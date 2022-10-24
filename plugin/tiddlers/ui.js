@@ -38,6 +38,8 @@ Cleans up data after a TaskList is removed
 				return;
 			}
 
+			document.querySelector('#ec_ap-wrap').style.display = "block";
+
 			document.querySelectorAll('.ec_ap-tab-header').forEach(function(element) {
 				if (element.getAttribute('data-for') === selectedTab) {
 					element.classList.add('selected');
@@ -46,29 +48,135 @@ Cleans up data after a TaskList is removed
 				}
 			});
 
-			var measures = {};
-			$tw.utils.each($tw.perf.measures, function(measure, filterName) {
-				var timesSorted = times.concat();
-				timesSorted.sort();
-				var half = Math.floor(timesCopy.length / 2);
 
-				measures = {
+			var measures = [];
+			$tw.utils.each($tw.perf.measures, function(measure, filterName) {
+				var lastTen = measure.times.slice(-10);
+				var timesSorted = measure.times.concat();
+				timesSorted.sort();
+
+				var half = Math.floor(timesSorted.length / 2);
+
+				measures.push({
+					filterName: filterName,
 					lastUse: measure.lastUse,
 					longestRun: measure.longestRun,
 					shortestRun: measure.shortestRun,
 					totalCalls: measure.totalCalls,
 					totalTime: measure.totalTime,
+					totalTimeLastTen: lastTen.reduce(function(sum, next) { return sum + next; }, 0),
 					times: measure.times,
 					timesSorted: timesSorted,
+					timesLastTen: lastTen,
 					average: measure.totalTime / measure.totalCalls,
 					median: timesSorted.length % 2
 						? timesSorted[half]
 						: (timesSorted[half - 1] + timesSorted[half]) / 2
-				}
+				});
 			});
 
+			var mostUsedFilters = measures.concat().sort(createSortByCallback(['totalCalls', 'lastUse']));
+			var singleLongestExecution = measures.concat().sort(createSortByCallback(['longestRun', 'lastUse']));
+			var totalLongestExecution = measures.concat().sort(createSortByCallback(['totalTime', 'lastUse']));
+			var averageLongest = measures.concat().sort(createSortByCallback(['average', 'lastUse']));
+			var medianLongest = measures.concat().sort(createSortByCallback(['average', 'lastUse']));
+			var totalLastTen = measures.concat().sort(createSortByCallback(['totalTmeLastTen', 'lastUse']));
 
+			createTable(
+				document.querySelector('#ec_ap--most-used'),
+				[
+					{name: 'Filter', field: 'filterName'},
+					{name: 'Uses', field: 'totalCalls' },
+					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
+					{
+						name: 'Total time (last 10)',
+						getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
+						getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
+					},
+					{name: 'Longest run', getText: function(m) { return m.longestRun.toFixed(2) + 'ms'; }},
+					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
+					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
+				],
+				mostUsedFilters.slice(0, 10)
+			);
+
+			createTable(
+				document.querySelector('#ec_ap--single-longest'),
+				[
+					{name: 'Filter', field: 'filterName'},
+					{name: 'Longest run', getText: function(m) { return m.longestRun.toFixed(2) + 'ms'; }},
+					{name: 'Uses', field: 'totalCalls' },
+					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
+					{
+						name: 'Total time (last 10)',
+						getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
+						getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
+					},
+					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
+					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
+				],
+				singleLongestExecution.slice(0, 10)
+			);
+
+			createTable(
+				document.querySelector('#ec_ap--total-longest'),
+				[
+					{name: 'Filter', field: 'filterName'},
+					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
+					{name: 'Uses', field: 'totalCalls' },
+					{
+						name: 'Total time (last 10)',
+						getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
+						getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
+					},
+					{name: 'Longest run', getText: function(m) { return m.longestRun.toFixed(2) + 'ms'; }},
+					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
+					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
+				],
+				totalLongestExecution.slice(0, 10)
+			);
 		};
+
+		var createSortByCallback = function(fields, reverse) {
+			var orderMultiplier = reverse ? -1 : 1;
+
+			return function(left, right) {
+				for(var i = 0; i < fields.length; i++) {
+					var field = fields[i];
+					if (left[field] !== right[field]) {
+						return (right[field] - left[field]) * orderMultiplier;
+					}
+				}
+
+				return left.filterName.localeCompare(right.filterName) * orderMultiplier;
+			}
+		}
+
+		var createTable = function(tableElement, headers, measures) {
+			var dm = $tw.utils.domMaker;
+			var theadThs = headers.map(function(header) {
+				return dm('th', {text: header.name});
+			});
+			var theadTr = dm("tr", {children: theadThs});
+			var tbodyTrs = measures.map(function(measure) {
+				var tds = headers.map(function(header) {
+					var content = dm('span', {
+						class: header.getTitle ? 'ec_ap-annotated' : '',
+						text: header.getText ? header.getText(measure) : measure[header.field],
+						attributes: {title: header.getTitle ? header.getTitle(measure) : ''}
+					});
+
+					return dm('td', {children: [content]});
+				});
+
+				return dm('tr', {children: tds});
+			});
+			var thead = dm('thead', {children: [theadTr]});
+			var tbody = dm('tbody', {children: tbodyTrs});
+			var table = dm('table', {children: [thead, tbody]});
+
+			tableElement.innerHTML = table.innerHTML;
+		}
 
 		$tw.wiki.addEventListener("change", function (changes) {
 			var tempTiddlers = 0;

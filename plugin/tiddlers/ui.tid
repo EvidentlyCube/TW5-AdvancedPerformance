@@ -69,7 +69,20 @@ tags: $:/tags/PageTemplate
 	background: #FFF;
 	flex-grow: 1;
 	padding: 1em;
-
+	overflow-y: scroll;
+}
+#ec_ap-tabs td {
+	padding: 2px 7px;
+}
+#ec_ap-tabs td:first-child {
+	font-family: monospace;
+	word-break: break-all;
+}
+#ec_ap-tabs td:not(:first-child) {
+	text-align: right;
+}
+.ec_ap-annotated {
+	border-bottom: 1px dotted #888;
 }
 </style>
 <div id="ec_ap-footer">
@@ -102,10 +115,23 @@ tags: $:/tags/PageTemplate
 		</div>
 		<div class="ec_ap-tab--filter-logs">
 			<h2>Most used filters</h2>
+			<table id="ec_ap--most-used"></table>
+
 			<h2>Single longest execution</h2>
+			<table id="ec_ap--single-longest"></table>
+
 			<h2>Total longest execution</h2>
+			<table id="ec_ap--total-longest"></table>
+
 			<h2>Longest average execution</h2>
+			<table id="ec_ap--average"></table>
+
 			<h2>Longest median execution</h2>
+			<table id="ec_ap--median"></table>
+
+			<h2>Total last ten</h2>
+			<table id="ec_ap--last-ten"></table>
+
 		</div>
 	</div>
 </div>
