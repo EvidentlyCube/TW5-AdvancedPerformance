@@ -1,4 +1,4 @@
-title: $:/plugins/EvidentlyCube/AdvancedPerformance/footer
+title: $:/plugins/EvidentlyCube/AdvancedPerformance/ui
 tags: $:/tags/PageTemplate
 
 <$list filter="[[$:/config/Performance/Instrumentation]get[text]match[yes]]">

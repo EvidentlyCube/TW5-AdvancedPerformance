@@ -95,7 +95,7 @@ Cleans up data after a TaskList is removed
 				var half = Math.floor(timesSorted.length / 2);
 
 				measures.push({
-					filterName: filterName,
+					filterName: filterName.replace(/^filter:\s*/, ''),
 					lastUse: measure.lastUse,
 					longestRun: measure.longestRun,
 					shortestRun: measure.shortestRun,
