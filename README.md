@@ -1,4 +1,4 @@
-# Auto Close Tags [TiddlyWiki5 Plugin]
+# Advanced Performance [TiddlyWiki5 Plugin]
 
 Expand TiddlyWiki's performance instrumentation and make its results available directly in your wiki, without having to use developer console of the browser.
 
