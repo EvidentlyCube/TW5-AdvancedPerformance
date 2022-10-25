@@ -77,9 +77,6 @@ exports.startup = function() {
 				self.measures[name].shortestRun = Math.min(takenTime, self.measures[name].shortestRun);
 				self.measures[name].totalTime += takenTime;
 				self.measures[name].times.push(takenTime);
-				// if (self.measures[name].times.length > 100) {
-					// self.measures[name].times.shift();
-				// }
 				return result;
 			};
 		} else {

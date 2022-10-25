@@ -1,6 +1,7 @@
 title: $:/plugins/EvidentlyCube/AdvancedPerformance/footer
 tags: $:/tags/PageTemplate
 
+<$list filter="[[$:/config/Performance/Instrumentation]get[text]match[yes]]">
 <style>
 #ec_ap-footer {
     position: fixed;
@@ -48,19 +49,30 @@ tags: $:/tags/PageTemplate
 #ec_ap-container > h1 {
 	padding: 1em;
 	margin: 0;
+	display: flex;
+	width: 100%;
+	gap: 1em;
 }
+#ec_ap-container > h1 span:first-child {
+	flex-grow: 1;
+}
+
 #ec_ap-tab-headers {
 	display: flex;
+	flex-wrap: wrap;
 	margin: auto;
 	width: 100%;
 }
 #ec_ap-tab-headers > div{
-	flex: 1 0 50%;
+	flex: 1 0 auto;
 	text-align: center;
 	font-size: 20px;
 	background: #EEE;
 	line-height: 30px;
 	vertical-align: middle;
+	white-space: nowrap;
+	padding: 0 2em;
+	cursor: pointer;
 }
 #ec_ap-tab-headers > div.selected {
 	background: #FFF;
@@ -84,8 +96,20 @@ tags: $:/tags/PageTemplate
 .ec_ap-annotated {
 	border-bottom: 1px dotted #888;
 }
+#ec_ap-tabs > *:not(.selected) {
+	display: none;
+}
+.ec_ap-header-button {
+	float: right;
+    color: blue;
+    font-variant: small-caps;
+    font-size: 0.75em;
+    cursor: pointer;
+    text-decoration: underline;
+}
 </style>
 <div id="ec_ap-footer">
+	<div id="ec_ap-message" style="display: none"></div>
 	<div>
 		<strong>Last refresh:</strong> <span id="ec_ap-last-refresh"></span>
 	</div>
@@ -104,35 +128,131 @@ tags: $:/tags/PageTemplate
 </div>
 <div id="ec_ap-wrap">
 <div id="ec_ap-container">
-	<h1>Performance reports:</h1>
+	<h1>
+		<span>Performance reports:</span>
+		<span id="ec_ap-clear" class="ec_ap-header-button" title="Clicking this will clear all performance data collected so far releasing memory and emptying the results">clear data</span>
+		<span id="ec_ap-close" class="ec_ap-header-button">close</span>
+	</h1>
 	<div id="ec_ap-tab-headers">
 		<div class="ec_ap-tab-header selected" data-for="ec_ap-tab--refresh-logs">Refresh logs</div>
-		<div class="ec_ap-tab-header" data-for="ec_ap-tab--filter-logs">Filter logs</div>
+		<div class="ec_ap-tab-header" data-for="ec_ap-tab--most-used">Most used filters</div>
+		<div class="ec_ap-tab-header" data-for="ec_ap-tab--single-longest">Single longest (filter)</div>
+		<div class="ec_ap-tab-header" data-for="ec_ap-tab--total-longest">Total longest (filter)</div>
+		<div class="ec_ap-tab-header" data-for="ec_ap-tab--average">Average (filters)</div>
+		<div class="ec_ap-tab-header" data-for="ec_ap-tab--median">Median (filters)</div>
 	</div>
 	<div id="ec_ap-tabs">
-		<div class="ec_ap-tab--refresh-logs">
+		<div class="ec_ap-tab--refresh-logs selected">
 			<h2>Latest page refreshes</h2>
+			<p id="ec_ap-times" class="ec_ap-muted">
+				This displays the times and lists of tiddlers of the last 50 refreshes that TiddlyWiki has processed.<br>
+				A refresh usually occurs when a tiddler state is changed and something on the page has to be updated because of that.<br>
+				<br>
+				Long refresh times may indicate among others: large lists that need to be completely rebuilt; too many and complicated
+				structure of your tiddlers (or too many tiddlers open at once).
+			</p>
+			<table id="ec_ap--last-refreshes"></table>
 		</div>
-		<div class="ec_ap-tab--filter-logs">
+		<div class="ec_ap-tab--most-used">
 			<h2>Most used filters</h2>
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Displays filter information sorted by which filter was used the largest number of times. This is unlikely to be
+				very helpful in locating places to improve but might be interesting to look at.
+				Mouse over <em>Total time (last 10)</em> to see how many ms the last 10 executions of this filter took.
+			</p>
+
+			<hr>
+
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Mouse over <em>Total time (last 10)</em> to see how many ms the last 10 executions of this filter took.
+			</p>
 			<table id="ec_ap--most-used"></table>
+		</div>
 
+		<div class="ec_ap-tab--single-longest">
 			<h2>Single longest execution</h2>
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Displays filter information sorted by which filter took the most time in a single execution. This can
+				help you locate the filters that take the most time on a single execution. Keep in mind:
+			</p>
+			<ul id="ec_ap-times" class="ec_ap-muted">
+				<li>
+					A filter that runs for a long time once can still take less time than a short filter that runs
+					multiple times.
+				</li>
+				<li>
+					Certain filters (notably ''backlinks'') can take a lot of time the first time they run, after which
+					they are very quick. Keep an eye on median, average and inspect the last 10 executions to get a better
+					picture.
+				</li>
+			</ul>
+
+			<hr>
+
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Mouse over <em>Total time (last 10)</em> to see how many ms the last 10 executions of this filter took.
+			</p>
 			<table id="ec_ap--single-longest"></table>
+		</div>
 
+		<div class="ec_ap-tab--total-longest">
 			<h2>Total longest execution</h2>
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Displays filter information sorted by which filter took the total most time in all executions. This can
+				help you locate the filters that are short but run so many times they are a problem. Keep in mind:
+			</p>
+			<ul id="ec_ap-times" class="ec_ap-muted">
+				<li>
+					Certain filters (notably ''backlinks'') can take a lot of time the first time they run, after which
+					they are very quick. Keep an eye on median, average and inspect the last 10 executions to get a better
+					picture.
+				</li>
+			</ul>
+
+			<hr>
+
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Mouse over <em>Total time (last 10)</em> to see how many ms the last 10 executions of this filter took.
+			</p>
 			<table id="ec_ap--total-longest"></table>
+		</div>
 
+		<div class="ec_ap-tab--average">
 			<h2>Longest average execution</h2>
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Displays filter information sorted by how much time a filter takes on average. Keep in mind:
+			</p>
+			<ul id="ec_ap-times" class="ec_ap-muted">
+				<li>
+					Certain filters (notably ''backlinks'') can take a lot of time the first time they run, after which
+					they are very quick, increasing the average. Keep an eye on median and inspect the last 10
+					executions to get a better picture.
+				</li>
+			</ul>
+
+			<hr>
+
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Mouse over <em>Total time (last 10)</em> to see how many ms the last 10 executions of this filter took.
+			</p>
 			<table id="ec_ap--average"></table>
+		</div>
 
+		<div class="ec_ap-tab--median">
 			<h2>Longest median execution</h2>
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Displays filter information sorted by median of all execution times. This can be helpful in filtering out
+				outliers that take a lot of time the first time they run (like ''backlinks'').
+			</p>
+
+			<hr>
+
+			<p id="ec_ap-times" class="ec_ap-muted">
+				Mouse over <em>Total time (last 10)</em> to see how many ms the last 10 executions of this filter took.
+			</p>
 			<table id="ec_ap--median"></table>
-
-			<h2>Total last ten</h2>
-			<table id="ec_ap--last-ten"></table>
-
 		</div>
 	</div>
 </div>
 </div>
+</$list>
