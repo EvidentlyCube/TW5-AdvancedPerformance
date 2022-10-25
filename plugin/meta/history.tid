@@ -1,5 +1,7 @@
 title: $:/plugins/EvidentlyCube/AdvancedPerformance/history
 type: text/vnd.tiddlywiki
 
+* ''1.0.1'' -- Fixed Z-index on the UI elements to (try to) be always on top + filters with variables now display correctly,
+  rather than the variables being treated as HTML tags
 * ''1.0.0'' -- Initial release
 * ''0.0.1'' -- Development version
