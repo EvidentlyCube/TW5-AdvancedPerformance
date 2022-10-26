@@ -76,6 +76,8 @@ Cleans up data after a TaskList is removed
 			});
 		};
 
+		// var getMeasuresSource
+
 		var showDetails = function() {
 			if (!isShowingDetails) {
 				document.querySelector('#ec_ap-wrap').style.display = "none";
@@ -85,6 +87,7 @@ Cleans up data after a TaskList is removed
 			document.querySelector('#ec_ap-wrap').style.display = "block";
 
 			refreshTabs();
+
 
 			var measures = [];
 			$tw.utils.each($tw.perf.measures, function(measure, filterName) {
@@ -125,15 +128,21 @@ Cleans up data after a TaskList is removed
 			createTable(
 				document.querySelector('#ec_ap--last-refreshes'),
 				[
+					{name: 'Select', getText: function(m) {
+						return $tw.utils.domMaker('input', {attributes: {
+							type: 'checkbox',
+							name: m.time
+						}}).outerHTML;
+					}},
 					{name: 'Refresh time', field: 'time'},
 					{name: 'Total time', getText: function(m) {
-						return Object.values(m.refreshTimes).reduce(function(sum, next) { return sum + next}, 0).toFixed(2) + "ms";
+						return Object.values(m.refreshTimes).reduce(function(sum, next) { return sum + next.timeTaken}, 0).toFixed(2) + "ms";
 					}},
 					{
 						name: 'Individual times',
 						getText: function(m) {
 							return Object.keys(m.refreshTimes).map(function(key) {
-								return key + ": " + m.refreshTimes[key].toFixed(2) + "ms";
+								return key + ": " + m.refreshTimes[key].timeTaken.toFixed(2) + "ms";
 							}).join("<br>");
 						}
 					},
@@ -336,13 +345,15 @@ Cleans up data after a TaskList is removed
 				totalTiddlers++;
 			});
 
-			$tw.utils.each($tw.perf.refreshTimes, function(time, name) {
-				totalTime += time;
+			console.log($tw.perf.refreshTimes);
+
+			$tw.utils.each($tw.perf.refreshTimes, function(data, name) {
+				totalTime += data.timeTaken;
 				refreshHtmls.push(
 					'<span title="'
 					+ name +
 					'">'
-					+ time.toFixed(2)
+					+ data.timeTaken.toFixed(2)
 					+ 'ms</span>'
 				);
 			});

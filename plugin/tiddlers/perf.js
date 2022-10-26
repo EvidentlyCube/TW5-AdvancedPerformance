@@ -24,6 +24,7 @@ exports.startup = function() {
 	$tw.Performance.prototype.showGreeting = function() {
 		this.refreshTimes = {};
 		this.refreshTimesHistory = [];
+		this.currentRefreshFilterLogs = {};
 	};
 
 	$tw.Performance.prototype.log = function() {
@@ -34,11 +35,19 @@ exports.startup = function() {
 		var self = this;
 		if(this.enabled) {
 			return function() {
+				self.currentRefreshFilterLogs = {};
+
 				var startTime = $tw.utils.timer(),
 					result = fn.apply(this,arguments),
 					timeTaken = $tw.utils.timer(startTime);
-				self.refreshTimes[name] = timeTaken;
-				self.logger.log(name + ": " + timeTaken.toFixed(2) + "ms");
+
+				self.refreshTimes[name] = {
+					timeTaken: timeTaken,
+					filterLogs: self.currentRefreshFilterLogs
+				};
+
+				self.currentRefreshFilterLogs = {};
+
 				return result;
 			};
 		} else {
@@ -57,12 +66,9 @@ exports.startup = function() {
 	$tw.Performance.prototype.measure = function(name,fn) {
 		var self = this;
 		if(this.enabled) {
-			return function() {
-				var startTime = $tw.utils.timer(),
-					result = fn.apply(this,arguments),
-					takenTime = $tw.utils.timer(startTime);
-				if(!(name in self.measures)) {
-					self.measures[name] = {
+			var storeLog = function(name, takenTime, measures) {
+				if(!(name in measures)) {
+					measures[name] = {
 						lastUse: 0,
 						longestRun: 0,
 						shortestRun: Number.MAX_SAFE_INTEGER,
@@ -71,12 +77,22 @@ exports.startup = function() {
 						times: []
 					};
 				}
-				self.measures[name].lastUse = Date.now();
-				self.measures[name].totalCalls++;
-				self.measures[name].longestRun = Math.max(takenTime, self.measures[name].longestRun);
-				self.measures[name].shortestRun = Math.min(takenTime, self.measures[name].shortestRun);
-				self.measures[name].totalTime += takenTime;
-				self.measures[name].times.push(takenTime);
+				measures[name].lastUse = Date.now();
+				measures[name].totalCalls++;
+				measures[name].longestRun = Math.max(takenTime, measures[name].longestRun);
+				measures[name].shortestRun = Math.min(takenTime, measures[name].shortestRun);
+				measures[name].totalTime += takenTime;
+				measures[name].times.push(takenTime);
+			};
+
+			return function() {
+				var startTime = $tw.utils.timer(),
+					result = fn.apply(this,arguments),
+					takenTime = $tw.utils.timer(startTime);
+
+				storeLog(name, takenTime, self.measures);
+				storeLog(name, takenTime, self.currentRefreshFilterLogs);
+
 				return result;
 			};
 		} else {

@@ -153,6 +153,9 @@ tags: $:/tags/PageTemplate
 				Long refresh times may indicate among others: large lists that need to be completely rebuilt; too many and complicated
 				structure of your tiddlers (or too many tiddlers open at once).
 			</p>
+			<hr>
+			<input type="checkbox" name="--all" id="ec_ap-all" checked>
+			<label for="ec_ap-all"> Show filter logs from all refreshes</label>
 			<table id="ec_ap--last-refreshes"></table>
 		</div>
 		<div class="ec_ap-tab--most-used">
