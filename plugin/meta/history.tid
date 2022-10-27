@@ -1,6 +1,9 @@
 title: $:/plugins/EvidentlyCube/AdvancedPerformance/history
 type: text/vnd.tiddlywiki
 
+* ''1.1.0'':
+** Added option to filter the tables of filters to only show ones that run during specific refreshes
+** Filters that run outside the defined refresh mechanism are now also counted and grouped as "other"
 * ''1.0.1'' -- Fixed Z-index on the UI elements to (try to) be always on top + filters with variables now display correctly,
   rather than the variables being treated as HTML tags
 * ''1.0.0'' -- Initial release
