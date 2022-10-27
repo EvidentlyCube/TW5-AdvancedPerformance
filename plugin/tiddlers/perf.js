@@ -24,7 +24,9 @@ exports.startup = function() {
 	$tw.Performance.prototype.showGreeting = function() {
 		this.refreshTimes = {};
 		this.refreshTimesHistory = [];
-		this.currentRefreshFilterLogs = {};
+		this.currentRefreshName = "other";
+
+		this.resetRefreshTimes();
 	};
 
 	$tw.Performance.prototype.log = function() {
@@ -35,18 +37,18 @@ exports.startup = function() {
 		var self = this;
 		if(this.enabled) {
 			return function() {
-				self.currentRefreshFilterLogs = {};
+				self.currentRefreshName = name;
+				self.refreshTimes[name] = {
+					timeTaken: 0,
+					filterLogs: {}
+				};
 
 				var startTime = $tw.utils.timer(),
 					result = fn.apply(this,arguments),
 					timeTaken = $tw.utils.timer(startTime);
 
-				self.refreshTimes[name] = {
-					timeTaken: timeTaken,
-					filterLogs: self.currentRefreshFilterLogs
-				};
-
-				self.currentRefreshFilterLogs = {};
+				self.refreshTimes[name].timeTaken = timeTaken;
+				self.currentRefreshName = "other";
 
 				return result;
 			};
@@ -55,10 +57,19 @@ exports.startup = function() {
 		}
 	};
 
+	$tw.Performance.prototype.resetRefreshTimes = function() {
+		this.refreshTimes = {
+			other: {
+				timeTaken: 0,
+				filterLogs: {}
+			}
+		};
+	};
+
 	$tw.Performance.prototype.storeRefresh = function(log) {
 		this.refreshTimesHistory.push(log);
 
-		if (this.refreshTimesHistory.length > 100) {
+		if (this.refreshTimesHistory.length > 50) {
 			this.refreshTimesHistory.shift();
 		}
 	}
@@ -91,7 +102,7 @@ exports.startup = function() {
 					takenTime = $tw.utils.timer(startTime);
 
 				storeLog(name, takenTime, self.measures);
-				storeLog(name, takenTime, self.currentRefreshFilterLogs);
+				storeLog(name, takenTime, self.refreshTimes[self.currentRefreshName].filterLogs);
 
 				return result;
 			};

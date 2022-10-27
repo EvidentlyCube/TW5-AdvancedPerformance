@@ -28,7 +28,7 @@ Cleans up data after a TaskList is removed
 		var isShowingDetails = false;
 		var selectedTab = "ec_ap-tab--refresh-logs";
 
-		var onClick = function(event) {
+		var onClickCapture = function(event) {
 			switch(event.target.getAttribute('data-ec-ap')) {
 				case 'show-details':
 					event.stopPropagation();
@@ -59,20 +59,46 @@ Cleans up data after a TaskList is removed
 					refreshTabs();
 					break;
 
+				case 'filter-all':
 				case 'filter-limit':
-
+					// these are handled in onClick
+					break;
 			}
 		};
 
-		document.querySelector('body').addEventListener('click', onClick, true);
+		var onClick = function(event) {
+			switch(event.target.getAttribute('data-ec-ap')) {
+				case 'filter-limit':
+					var selectedFilterCount = document.querySelectorAll('input[data-ec-ap="filter-limit"]:checked').length;
+
+					var all = document.querySelector('input[data-ec-ap="filter-all"]');
+					if (selectedFilterCount === 0) {
+						all.checked = true;
+					} else {
+						all.checked = false;
+					}
+					refreshFilterTabs();
+					break;
+				case 'filter-all':
+					var checked = !event.target.checked;
+					document.querySelectorAll('input[data-ec-ap="filter-limit"]').forEach(function(checkbox) {
+						checkbox.checked = checked;
+					})
+					refreshFilterTabs();
+					break;
+			}
+		};
+
+		document.querySelector('body').addEventListener('click', onClickCapture, true);
+		document.querySelector('body').addEventListener('click', onClick);
 
 		var clearPerfData = function() {
 			event.stopPropagation();
 			event.preventDefault();
 
 			$tw.perf.measures = {};
-			$tw.perf.refreshTimes = {};
 			$tw.perf.refreshTimesHistory = [];
+			$tw.perf.resetRefreshTimes();
 
 			footerText = "Performance data was cleared, please interact with the wiki to start collecting data";
 
@@ -97,6 +123,54 @@ Cleans up data after a TaskList is removed
 			});
 		};
 
+		var getFilteredMeasures = function() {
+			var allFilter = document.querySelector('input[data-ec-ap="filter-all"]');
+			var checkedBoxes = document.querySelectorAll('input[data-ec-ap="filter-limit"]:checked');
+
+			// If not filtering by refresh then take the global measures
+			if (allFilter.checked === true) {
+				return $tw.perf.measures;
+			}
+
+			// Otherwise we need to construct them
+			var ids = new Set();
+			var measures = {};
+
+			var storeMeasure = function(name, logs) {
+				if(!(name in measures)) {
+					measures[name] = JSON.parse(JSON.stringify(logs));
+					return;
+				}
+
+				measures[name].lastUse = Math.max(measures[name].lastUse, logs);
+				measures[name].totalCalls += logs.totalCalls;
+				measures[name].longestRun = Math.max(logs.longestRun, measures[name].longestRun);
+				measures[name].shortestRun = Math.min(logs.longestRun, measures[name].shortestRun);
+				measures[name].totalTime += logs.longestRun;
+				measures[name].times.push.apply(measures[name].times, logs.times);
+			};
+
+			checkedBoxes.forEach(function(checkbox) {
+				ids.add(checkbox.getAttribute('data-id') + ':' + checkbox.getAttribute('data-key'));
+			});
+
+			$tw.perf.refreshTimesHistory.forEach(function(measure) {
+				$tw.utils.each(measure.refreshTimes, function(refreshTimes, name) {
+					var id = measure.id + ':' + name;
+					if (!ids.has(id)) {
+						return;
+					}
+
+					$tw.utils.each(refreshTimes.filterLogs, function(logs, filterName) {
+						console.log(filterName, logs);
+						storeMeasure(filterName, logs);
+					});
+				});
+			});
+
+			return measures;
+		}
+
 		var showDetails = function() {
 			if (!isShowingDetails) {
 				document.querySelector('#ec_ap-wrap').style.display = "none";
@@ -107,9 +181,66 @@ Cleans up data after a TaskList is removed
 
 			refreshTabs();
 
+			var dm = $tw.utils.domMaker;
+
+			createTable(
+				document.querySelector('#ec_ap--last-refreshes'),
+				[
+					{name: 'Refresh time', field: 'time'},
+					{name: 'Total time', getText: function(m) {
+						return Object.values(m.refreshTimes).reduce(function(sum, next) { return sum + next.timeTaken}, 0).toFixed(2) + "ms";
+					}},
+					{
+						name: 'Individual times',
+						getText: function(m) {
+							return Object.keys(m.refreshTimes).map(function(key) {
+								var id = "ec-ap-checkbox--" + key + "-" + m.id;
+								var checkbox = dm('input', {attributes: {
+									id: id,
+									type: 'checkbox',
+									'data-id': m.id,
+									'data-key': key,
+									'data-ec-ap': 'filter-limit'
+								}});
+								var text = dm('span', {
+									text: key + ": " + m.refreshTimes[key].timeTaken.toFixed(2) + "ms"
+								});
+								text.innerHTML = "&nbsp;" + text.innerHTML + "&nbsp;";
+
+								var filterCount = Object.keys(m.refreshTimes[key].filterLogs).length;
+								var text2 = dm('span', {
+									class: 'ec_ap-muted',
+									text: '(' + filterCount + " filter"+(filterCount !== '1' ? 's' : '')+" executed)"
+								});
+
+								return dm('label', {children: [checkbox, text, text2], attributes: {'for': id}}).outerHTML;
+							}).join("<br>");
+						}
+					},
+					{
+						name: 'Changed tiddlers',
+						getText: function(m) {
+							return m.changedTiddlerNames.length;
+						},
+						getTitle: function(m) {
+							return m.changedTiddlerNames.join("\n");
+						}
+					},
+					{name: "Temp", getText: function(m) { return m.tempTiddlers; }},
+					{name: "State", getText: function(m) { return m.stateTiddlers; }},
+					{name: "System", getText: function(m) { return m.systemTiddlers; }},
+					{name: "Main", getText: function(m) { return m.mainTiddlers; }},
+				],
+				$tw.perf.refreshTimesHistory.reverse()
+			);
+
+			refreshFilterTabs();
+		};
+
+		var refreshFilterTabs = function() {
 
 			var measures = [];
-			$tw.utils.each($tw.perf.measures, function(measure, filterName) {
+			$tw.utils.each(getFilteredMeasures(), function(measure, filterName) {
 				var lastTen = measure.times.slice(-10);
 				var timesSorted = measure.times.concat();
 				timesSorted.sort();
@@ -143,50 +274,6 @@ Cleans up data after a TaskList is removed
 			var totalLongestExecution = measures.concat().sort(createSortByCallback(['totalTime', 'lastUse']));
 			var averageLongest = measures.concat().sort(createSortByCallback(['average', 'lastUse']));
 			var medianLongest = measures.concat().sort(createSortByCallback(['median', 'lastUse']));
-			var dm = $tw.utils.domMaker;
-
-			createTable(
-				document.querySelector('#ec_ap--last-refreshes'),
-				[
-					{name: 'Refresh time', field: 'time'},
-					{name: 'Total time', getText: function(m) {
-						return Object.values(m.refreshTimes).reduce(function(sum, next) { return sum + next.timeTaken}, 0).toFixed(2) + "ms";
-					}},
-					{
-						name: 'Individual times',
-						getText: function(m) {
-							return Object.keys(m.refreshTimes).map(function(key) {
-								var id = "ec-ap-checkbox--" + key + "-" + m.id;
-								var checkbox = dm('input', {attributes: {
-									id: id,
-									type: 'checkbox',
-									'data-key': key,
-									'data-time': m.time,
-									'data-ec-ap': 'filter-limit'
-								}});
-								var text = dm('span', {text: key + ": " + m.refreshTimes[key].timeTaken.toFixed(2) + "ms"});
-								text.innerHTML = "&nbsp;" + text.innerHTML;
-
-								return dm('label', {children: [checkbox, text], attributes: {'for': id}}).outerHTML;
-							}).join("<br>");
-						}
-					},
-					{
-						name: 'Changed tiddlers',
-						getText: function(m) {
-							return m.changedTiddlerNames.length;
-						},
-						getTitle: function(m) {
-							return m.changedTiddlerNames.join("\n");
-						}
-					},
-					{name: "Temp", getText: function(m) { return m.tempTiddlers; }},
-					{name: "State", getText: function(m) { return m.stateTiddlers; }},
-					{name: "System", getText: function(m) { return m.systemTiddlers; }},
-					{name: "Main", getText: function(m) { return m.mainTiddlers; }},
-				],
-				$tw.perf.refreshTimesHistory.slice(-recordsToShow).reverse()
-			);
 
 			createTable(
 				document.querySelector('#ec_ap--most-used'),
@@ -370,9 +457,14 @@ Cleans up data after a TaskList is removed
 				totalTiddlers++;
 			});
 
-			console.log($tw.perf.refreshTimes);
+			$tw.utils.each(refreshTimes, function(data, name) {
+				if (name === 'other') {
+					// Precalculate other's time taken because it contains all filters that run outside refreshes
+					refreshTimes[name].timeTaken = Object.values(data.filterLogs).reduce(function(total, measure) {
+						return total + measure.totalTime;
+					}, 0);
+				}
 
-			$tw.utils.each($tw.perf.refreshTimes, function(data, name) {
 				totalTime += data.timeTaken;
 				refreshHtmls.push(
 					'<span title="'
@@ -414,7 +506,7 @@ Cleans up data after a TaskList is removed
 			document.querySelector('#ec_ap-tiddlers-main').innerHTML = "Main=" + mainTiddlers;
 
 			// Clear current refresh times to avoid outdated `mainRender` polluting our logs
-			$tw.perf.refreshTimes = {};
+			$tw.perf.resetRefreshTimes();
 		});
 	};
 
