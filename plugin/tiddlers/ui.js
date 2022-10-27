@@ -21,31 +21,52 @@ Cleans up data after a TaskList is removed
 			return;
 		}
 
+		var refreshIdCounter = 1;
 		var footerText = $tw.wiki.getTiddlerText('$:/config/Performance/Instrumentation') !== "yes"
 			? "Performance instrumentation has been enabled, please save your wiki and refresh it to allow collecting data"
 			: "";
 		var isShowingDetails = false;
 		var selectedTab = "ec_ap-tab--refresh-logs";
 
-		var onCloseClicked = function(event) {
-			isShowingDetails = false;
-			showDetails();
+		var onClick = function(event) {
+			switch(event.target.getAttribute('data-ec-ap')) {
+				case 'show-details':
+					event.stopPropagation();
+					event.preventDefault();
+
+					isShowingDetails = true;
+					showDetails();
+					break;
+				case 'clear-data':
+					event.stopPropagation();
+					event.preventDefault();
+
+					clearPerfData();
+					break;
+				case 'close':
+					event.stopPropagation();
+					event.preventDefault();
+
+					isShowingDetails = false;
+					showDetails();
+					break;
+
+				case 'tab':
+					event.stopPropagation();
+					event.preventDefault();
+
+					selectedTab = event.target.getAttribute('data-for') || selectedTab;
+					refreshTabs();
+					break;
+
+				case 'filter-limit':
+
+			}
 		};
 
-		var onTabClicked = function(event) {
-			selectedTab = event.target.getAttribute('data-for') || selectedTab;
-			refreshTabs();
-		}
+		document.querySelector('body').addEventListener('click', onClick, true);
 
-		var onShowDetailsClicked = function(event) {
-			event.stopPropagation();
-			event.preventDefault();
-
-			isShowingDetails = true;
-			showDetails();
-		};
-
-		var onClearPerfDataClicked = function(event) {
+		var clearPerfData = function() {
 			event.stopPropagation();
 			event.preventDefault();
 
@@ -75,8 +96,6 @@ Cleans up data after a TaskList is removed
 				}
 			});
 		};
-
-		// var getMeasuresSource
 
 		var showDetails = function() {
 			if (!isShowingDetails) {
@@ -124,16 +143,11 @@ Cleans up data after a TaskList is removed
 			var totalLongestExecution = measures.concat().sort(createSortByCallback(['totalTime', 'lastUse']));
 			var averageLongest = measures.concat().sort(createSortByCallback(['average', 'lastUse']));
 			var medianLongest = measures.concat().sort(createSortByCallback(['median', 'lastUse']));
+			var dm = $tw.utils.domMaker;
 
 			createTable(
 				document.querySelector('#ec_ap--last-refreshes'),
 				[
-					{name: 'Select', getText: function(m) {
-						return $tw.utils.domMaker('input', {attributes: {
-							type: 'checkbox',
-							name: m.time
-						}}).outerHTML;
-					}},
 					{name: 'Refresh time', field: 'time'},
 					{name: 'Total time', getText: function(m) {
 						return Object.values(m.refreshTimes).reduce(function(sum, next) { return sum + next.timeTaken}, 0).toFixed(2) + "ms";
@@ -142,7 +156,18 @@ Cleans up data after a TaskList is removed
 						name: 'Individual times',
 						getText: function(m) {
 							return Object.keys(m.refreshTimes).map(function(key) {
-								return key + ": " + m.refreshTimes[key].timeTaken.toFixed(2) + "ms";
+								var id = "ec-ap-checkbox--" + key + "-" + m.id;
+								var checkbox = dm('input', {attributes: {
+									id: id,
+									type: 'checkbox',
+									'data-key': key,
+									'data-time': m.time,
+									'data-ec-ap': 'filter-limit'
+								}});
+								var text = dm('span', {text: key + ": " + m.refreshTimes[key].timeTaken.toFixed(2) + "ms"});
+								text.innerHTML = "&nbsp;" + text.innerHTML;
+
+								return dm('label', {children: [checkbox, text], attributes: {'for': id}}).outerHTML;
 							}).join("<br>");
 						}
 					},
@@ -368,6 +393,7 @@ Cleans up data after a TaskList is removed
 				+ (now.getTime() % 1000).toString().padStart(3, "0");
 
 			$tw.perf.storeRefresh({
+				id: refreshIdCounter++,
 				time: time,
 				tempTiddlers: tempTiddlers,
 				stateTiddlers: stateTiddlers,
@@ -389,22 +415,6 @@ Cleans up data after a TaskList is removed
 
 			// Clear current refresh times to avoid outdated `mainRender` polluting our logs
 			$tw.perf.refreshTimes = {};
-
-			var showDetailsButton = document.querySelector('#ec_ap-show-details');
-			showDetailsButton.removeEventListener('click', onShowDetailsClicked);
-			showDetailsButton.addEventListener('click', onShowDetailsClicked);
-
-			var tabsContainer = document.querySelector('#ec_ap-tab-headers');
-			tabsContainer.removeEventListener('click', onTabClicked, true);
-			tabsContainer.addEventListener('click', onTabClicked, true);
-
-			var closeButton = document.querySelector('#ec_ap-close');
-			closeButton.removeEventListener('click', onCloseClicked, true);
-			closeButton.addEventListener('click', onCloseClicked, true);
-
-			var clearPerfDataButton = document.querySelector('#ec_ap-clear');
-			clearPerfDataButton.removeEventListener('click', onClearPerfDataClicked, true);
-			clearPerfDataButton.addEventListener('click', onClearPerfDataClicked, true);
 		});
 	};
 

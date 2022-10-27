@@ -126,22 +126,29 @@ tags: $:/tags/PageTemplate
 			<span id="ec_ap-tiddlers-main"></span>
 		)</span>
 	</div>
-	<a id="ec_ap-show-details" href="#">Show details</a>
+	<a id="ec_ap-show-details" href="#" data-ec-ap="show-details">Show details</a>
 </div>
 <div id="ec_ap-wrap">
 <div id="ec_ap-container">
 	<h1>
 		<span>Performance reports:</span>
-		<span id="ec_ap-clear" class="ec_ap-header-button" title="Clicking this will clear all performance data collected so far releasing memory and emptying the results">clear data</span>
-		<span id="ec_ap-close" class="ec_ap-header-button">close</span>
+		<span
+			id="ec_ap-clear"
+			class="ec_ap-header-button"
+			title="Clicking this will clear all performance data collected so far releasing memory and emptying the results"
+			data-ec-ap="clear-data"
+		>
+			clear data
+		</span>
+		<span id="ec_ap-close" class="ec_ap-header-button" data-ec-ap="close">close</span>
 	</h1>
 	<div id="ec_ap-tab-headers">
-		<div class="ec_ap-tab-header selected" data-for="ec_ap-tab--refresh-logs">Refresh logs</div>
-		<div class="ec_ap-tab-header" data-for="ec_ap-tab--most-used">Most used filters</div>
-		<div class="ec_ap-tab-header" data-for="ec_ap-tab--single-longest">Single longest (filter)</div>
-		<div class="ec_ap-tab-header" data-for="ec_ap-tab--total-longest">Total longest (filter)</div>
-		<div class="ec_ap-tab-header" data-for="ec_ap-tab--average">Average (filters)</div>
-		<div class="ec_ap-tab-header" data-for="ec_ap-tab--median">Median (filters)</div>
+		<div class="ec_ap-tab-header selected" data-ec-ap="tab" data-for="ec_ap-tab--refresh-logs">Refresh logs</div>
+		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--most-used">Most used filters</div>
+		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--single-longest">Single longest (filter)</div>
+		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--total-longest">Total longest (filter)</div>
+		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--average">Average (filters)</div>
+		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--median">Median (filters)</div>
 	</div>
 	<div id="ec_ap-tabs">
 		<div class="ec_ap-tab--refresh-logs selected">
@@ -168,7 +175,7 @@ tags: $:/tags/PageTemplate
 
 			<hr>
 
-			<p id="ec_ap-times" class="ec_ap-muted">
+			<p id="ec_ap-times" class="ec_ap-muted" data-ec-ap="filter-limit-all">
 				Mouse over <em>Total time (last 10)</em> to see how many ms the last 10 executions of this filter took.
 			</p>
 			<table id="ec_ap--most-used"></table>
