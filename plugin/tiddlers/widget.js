@@ -30,6 +30,72 @@ Hook itself to all widgets
 		};
 	};
 
+	var describeWidgetBit = function(bits, name, value) {
+		if (value) {
+			var trimmedValue = value.toString();
+
+			if (trimmedValue.length > 32) {
+				trimmedValue = trimmedValue.substring(0, 32) + "...";
+
+				bits.push(
+					$tw.utils.domMaker('strong', {text: name + '='}).outerHTML
+					+ $tw.utils.domMaker('span', {text: trimmedValue, class: 'ec_ap-annotated', attributes: {title: value}}).outerHTML
+				);
+			} else {
+				bits.push(
+					$tw.utils.domMaker('strong', {text: name + '='}).outerHTML
+					+ $tw.utils.domMaker('span', {text: value}).outerHTML
+				);
+			}
+		}
+	}
+	exports.describeWidgetAttributes = function(widgetName, widget) {
+		var bits = [];
+		switch(widgetName) {
+			case 'set':
+				describeWidgetBit(bits, 'Name', widget.setName);
+				describeWidgetBit(bits, 'Value', widget.setValue);
+				describeWidgetBit(bits, 'EmptyValue', widget.setEmptyValue);
+				describeWidgetBit(bits, 'Filter', widget.setFilter);
+				break;
+			case 'reveal':
+				describeWidgetBit(bits, 'State', widget.state);
+				describeWidgetBit(bits, 'StateTitle', widget.stateTitle);
+				describeWidgetBit(bits, 'StateField', widget.stateField);
+				describeWidgetBit(bits, 'StateIndex', widget.stateIndex);
+				describeWidgetBit(bits, 'Type', widget.type);
+				describeWidgetBit(bits, 'Position', widget.position);
+				break;
+			case 'transclude':
+				describeWidgetBit(bits, 'Title', widget.transcludeTitle);
+				describeWidgetBit(bits, 'SubTiddler', widget.transcludeSubTiddler);
+				describeWidgetBit(bits, 'Field', widget.transcludeField);
+				describeWidgetBit(bits, 'Index', widget.transcludeIndex);
+				describeWidgetBit(bits, 'Mode', widget.transcludeMode);
+				break;
+			case 'vars':
+				$tw.utils.each(widget.attributes,function(value, name) {
+					if(name.charAt(0) !== "$") {
+						describeWidgetBit(bits, name, value)
+					}
+				});
+				break;
+			case 'macrocall':
+				describeWidgetBit(bits, 'Name', widget.parseTreeNode.name || widget.getAttribute("$name"));
+				break;
+			case 'text':
+				describeWidgetBit(bits, 'Text', widget.getAttribute("text", widget.parseTreeNode.text || ""));
+				break;
+			case 'element':
+				describeWidgetBit(bits, 'Tag', widget.tag);
+				break;
+			case 'tiddler':
+				describeWidgetBit(bits, 'Tiddler', widget.getAttribute("tiddler", widget.getVariable("currentTiddler")));
+				break;
+		}
+		return bits.join('<br>');
+	}
+
 	exports.startup = function () {
 		if ($tw.node) {
 			return;

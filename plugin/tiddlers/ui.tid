@@ -118,6 +118,15 @@ tags: $:/tags/PageTemplate
 	font-size: 0.75em;
 	cursor: pointer;
 }
+#ec_ap--inspect-widgets td:nth-child(3) {
+    text-align: left;
+}
+#ec_ap--inspect-widgets td:nth-child(5) {
+    text-align: center;
+}
+#ec_ap--inspect-widgets td:nth-child(5) {
+    white-space: nowrap;
+}
 </style>
 <div id="ec_ap-footer">
 	<div id="ec_ap-message" style="display: none"></div>
@@ -160,6 +169,7 @@ tags: $:/tags/PageTemplate
 	</h1>
 	<div id="ec_ap-tab-headers">
 		<div class="ec_ap-tab-header selected" data-ec-ap="tab" data-for="ec_ap-tab--refresh-logs">Refresh logs</div>
+		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--inspect-widgets">Inspect widgets</div>
 		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--median">Median (filters)</div>
 		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--average">Average (filters)</div>
 		<div class="ec_ap-tab-header" data-ec-ap="tab" data-for="ec_ap-tab--total-longest">Total longest (filter)</div>
@@ -186,6 +196,18 @@ tags: $:/tags/PageTemplate
 			</p>
 
 			<table id="ec_ap--last-refreshes"></table>
+		</div>
+		<div class="ec_ap-tab--inspect-widgets">
+			<h2>Inspect widgets</h2>
+			<p class="ec_ap-muted">
+				The table below lists all widgets that were fully rerendered in the selected refresh cycle.<br>
+				<br>
+				You can click on the dom elements in the last column to preview their location on the page.
+			</p>
+			<hr>
+			<table id="ec_ap--inspect-widgets">
+			<tbody><tr><td>Please select a refresh cycle on "Refresh logs" tab</td></tr></tbody>
+			</table>
 		</div>
 		<div class="ec_ap-tab--most-used">
 			<h2>Most used filters</h2>

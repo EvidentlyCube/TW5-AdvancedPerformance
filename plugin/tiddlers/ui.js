@@ -27,6 +27,7 @@ Cleans up data after a TaskList is removed
 			: "";
 		var isShowingDetails = false;
 		var selectedTab = "ec_ap-tab--refresh-logs";
+		var widgetInspectLog = null;
 		var widgetTracker = require('$:/plugins/EvidentlyCube/AdvancedPerformance/widget.js');
 
 		var onClickCapture = function(event) {
@@ -102,6 +103,44 @@ Cleans up data after a TaskList is removed
 					refreshFilterTabs();
 					break;
 
+				case 'inspect-widgets':
+					event.stopImmediatePropagation();
+					event.preventDefault();
+
+					var id = parseInt(target.getAttribute('data-id'));
+					widgetInspectLog = $tw.perf.refreshTimesHistory.find(function(log) {
+						return log.id === id;
+					});
+					selectedTab = 'ec_ap-tab--inspect-widgets';
+					refreshWidgetsTab();
+					refreshTabs();
+					break;
+
+				case 'widget-log-widget':
+					event.stopImmediatePropagation();
+					event.preventDefault();
+					var index = target.getAttribute('data-index');
+					var log = widgetInspectLog.widgets.renderedWidgets[index];
+
+					if (log) {
+						console.log("Logging widget:", log.widget)
+					}
+					break;
+
+				case 'widget-log-dom':
+					event.stopImmediatePropagation();
+					event.preventDefault();
+					var index = target.getAttribute('data-index');
+					var log = widgetInspectLog.widgets.renderedWidgets[index];
+
+					if (log) {
+						console.log("Logging DOM:")
+						$tw.utils.each(log.dom, function(dom) {
+							console.log(dom);
+						})
+					}
+					break;
+
 				default:
 					if (isShowingDetails) {
 						event.stopImmediatePropagation();
@@ -114,17 +153,69 @@ Cleans up data after a TaskList is removed
 		document.documentElement.addEventListener('click', onClickCapture, true);
 
 		var clearPerfData = function() {
-			event.stopImmediatePropagation();
-			event.preventDefault();
-
 			$tw.perf.measures = {};
 			$tw.perf.refreshTimesHistory = [];
 			$tw.perf.resetRefreshTimes();
+			widgetInspectLog = null;
 
 			footerText = "Performance data was cleared, please interact with the wiki to start collecting data";
 
+			refreshWidgetsTab();
 			showDetails();
 			refreshFooter();
+		}
+
+		var refreshWidgetsTab = function() {
+			var table = document.querySelector('#ec_ap--inspect-widgets');
+			if (!widgetInspectLog) {
+				table.innerHTML = '<tbody><tr><td>Please select a refresh cycle on "Refresh logs" tab</td></tr></tbody>';
+				return;
+			}
+
+			var dm = $tw.utils.domMaker;
+
+			createTable(
+				table,
+				[
+					{name: 'Name', getText: function(w) { return w.name; }},
+					{name: 'Time', getText: function(w) { return w.time.toFixed(2) + 'ms'; }},
+					{name: 'Description', getText: function(w) { return widgetTracker.describeWidgetAttributes(w.name, w.widget); }},
+					{name: 'DOM', getText: function(w) {
+						if (w.dom.length === 0) {
+							return '<span class="ec_ap-muted">n/a</span>';
+						}
+						return w.dom.map(function(dom) {
+							if (dom.nodeType === Node.TEXT_NODE) {
+								return $tw.utils.domMaker('span', {text: 'text node', class: 'ec_ap-muted'}).outerHTML;
+							} else if (dom.nodeType === Node.ELEMENT_NODE) {
+								return $tw.utils.domMaker('span', {text: '<' + dom.tagName + '>'}).outerHTML;
+							} else {
+								return '?? TYPE=' + dom.nodeType;
+							}
+						}).join("<br>");
+					}},
+					{name: 'Actions', getText: function(w, index) {
+						return [
+							dm('a', {text: 'Highlight DOM', attributes: {
+								href: '#',
+								'data-ec-ap': 'widget-highlight',
+								'data-index': index
+							}}),
+							dm('a', {text: 'Console.log widget', attributes: {
+								href: '#',
+								'data-ec-ap': 'widget-log-widget',
+								'data-index': index
+							}}),
+							dm('a', {text: 'Console.log DOM', attributes: {
+								href: '#',
+								'data-ec-ap': 'widget-log-dom',
+								'data-index': index
+							}})
+						].map(function(d) {return d.outerHTML;}).join('<br>');
+					}}
+				],
+				widgetInspectLog.widgets.renderedWidgets
+			)
 		}
 
 		var refreshTabs = function() {
@@ -270,14 +361,21 @@ Cleans up data after a TaskList is removed
 							map.set(next, oldCount + 1);
 							return map;
 						}, new Map());
+
 						var createdWidgets = Array.from(createdWidgetsMap.entries()).map(function(entry) {
 							return entry[0] + " x" + entry[1];
 						});
 						createdWidgets.sort();
+
 						return [
 							createWidgetsRow('Created', m.widgets.createdWidgetNames.length, createdWidgets.join("\n")),
 							createWidgetsRow('Rerendered', m.widgets.renderedWidgets.length, null),
 							createWidgetsRow('Refreshed', m.widgets.refreshedWidgetsCount, null),
+							dm('a', {text: 'Inspect widgets', attributes: {
+								href: '#',
+								'data-ec-ap': 'inspect-widgets',
+								'data-id': m.id
+							}}).outerHTML
 						].join("<br>");
 					}}
 				],
@@ -441,12 +539,12 @@ Cleans up data after a TaskList is removed
 				return dm('th', {text: header.name});
 			});
 			var theadTr = dm("tr", {children: theadThs});
-			var tbodyTrs = measures.map(function(measure) {
+			var tbodyTrs = measures.map(function(measure, measureIndex) {
 				var tds = headers.map(function(header) {
 					var title = header.getTitle ? header.getTitle(measure) : '';
 					var content = dm('span', {
 						class: title ? 'ec_ap-annotated' : '',
-						innerHTML: header.getText ? header.getText(measure) : measure[header.field],
+						innerHTML: header.getText ? header.getText(measure, measureIndex) : measure[header.field],
 						attributes: {title: header.getTitle ? header.getTitle(measure) : ''}
 					});
 
