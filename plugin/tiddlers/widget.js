@@ -16,57 +16,96 @@ Hook itself to all widgets
 	exports.name = "evidentlycube-adv-perf--widget";
 	exports.after = ["startup"];
 	exports.synchronous = true;
+	exports.stats = {
+		createdWidgetNames: [],
+		refreshedWidgetsCount: 0,
+		renderedWidgets: []
+	};
+
+	exports.clearStats = function() {
+		exports.stats = {
+			createdWidgetNames: [],
+			refreshedWidgetsCount: 0,
+			renderedWidgets: []
+		};
+	};
+
 	exports.startup = function () {
 		if ($tw.node) {
 			return;
 		}
 
-		var createdWidgets = 0;
-		var refreshedWidgets = 0;
-		var renderedWidgets = 0;
-
 		var widget = require("$:/core/modules/widgets/widget.js").widget;
 		var widgets = $tw.modules.applyMethods("widget");
 
-		var injectedMethods = new Set();
-		var injectCallback = function(widgetClass, methodName, callback) {
-			var oldMethod = widgetClass.prototype[methodName];
+		widget.prototype.__widgetName = "Widget";
 
-			while (!oldMethod && widgetClass.prototype) {
-				widgetClass = widgetClass.prototype;
-				oldMethod = widgetClass.prototype[methodName];
-			}
-
-			if (!oldMethod || injectedMethods.has(oldMethod)) {
-				return;
-			}
-
-			injectedMethods.add(oldMethod);
-
-			widgetClass.prototype[methodName] = function() {
-				callback.apply(this, arguments);
-				return oldMethod.apply(this, arguments);
-			};
-		};
-
-		injectCallback(widget, 'initialise', function() {
-			createdWidgets++;
-		})
-
-		$tw.utils.each(widgets, function(module, title) {
-			injectCallback(module, 'refresh', function() {
-				refreshedWidgets++;
-			});
-			injectCallback(module, 'render', function() {
-				renderedWidgets++;
-			});
+		injectCallback(widget, 'initialise', function(widget, timeTaken) {
+			exports.stats.createdWidgetNames.push( widget.__widgetName);
 		});
 
-		setInterval(function() {
-			console.log(`Created: ${createdWidgets}, Rendered: ${renderedWidgets}, Refreshed: ${refreshedWidgets}`);
-			createdWidgets = 0;
-			refreshedWidgets = 0;
-		}, 500);
+		$tw.utils.each(widgets, function(module, title) {
+			module.prototype.__widgetName = title;
+
+			injectCallback(module, 'refresh', function(widget) {
+				exports.stats.refreshedWidgetsCount++;
+			});
+
+			injectCallback(module, 'render', function(widget, timeTaken) {
+				exports.stats.renderedWidgets.push({
+					name: widget.__widgetName,
+					time: timeTaken,
+					widget: widget,
+					dom: getFirstNodes(widget).filter(function(node) {
+						return node.getRootNode;
+					})
+				});
+			});
+		});
 	};
 
+	/**
+	 * Return all the nodes in the first depth/child it finds dom nodes
+	 */
+	function getFirstNodes(widget) {
+		if(widget.domNodes.length > 0) {
+			return widget.domNodes;
+		}
+
+		// Otherwise, recursively call our children
+		for(var t = 0; t < widget.children.length; t++) {
+			var domNodes = getFirstNodes(widget.children[t]);
+			if(domNodes) {
+				return domNodes;
+			}
+		}
+
+		return [];
+	}
+
+	var injectedMethods = new Set();
+	function injectCallback(widgetClass, methodName, callback) {
+		var oldMethod = widgetClass.prototype[methodName];
+
+		while (!oldMethod && widgetClass.prototype) {
+			widgetClass = widgetClass.prototype;
+			oldMethod = widgetClass.prototype[methodName];
+		}
+
+		if (!oldMethod || injectedMethods.has(oldMethod)) {
+			return;
+		}
+
+		injectedMethods.add(oldMethod);
+
+		widgetClass.prototype[methodName] = function() {
+			var startTime = $tw.utils.timer(),
+				result = oldMethod.apply(this,arguments),
+				timeTaken = $tw.utils.timer(startTime);
+
+			callback(this, timeTaken);
+
+			return result;
+		};
+	};
 })();

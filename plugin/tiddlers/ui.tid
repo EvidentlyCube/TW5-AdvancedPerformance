@@ -135,6 +135,12 @@ tags: $:/tags/PageTemplate
 			<span id="ec_ap-tiddlers-main"></span>
 		)</span>
 	</div>
+	<div>
+		<strong>Widgets:</strong>
+		<span id="ec_ap-widgets-created" title="Created widgets"></span>
+		/ <span id="ec_ap-widgets-rerendered" title="Fully rerendered widgets"></span>
+		/ <span id="ec_ap-widgets-refreshed" title="Refreshed widgets"></span>
+	</div>
 	<a id="ec_ap-show-details" class="tc-tiddlylink" href="#" data-ec-ap="show-details">Show details</a>
 </div>
 <div id="ec_ap-wrap">

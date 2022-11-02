@@ -27,6 +27,7 @@ Cleans up data after a TaskList is removed
 			: "";
 		var isShowingDetails = false;
 		var selectedTab = "ec_ap-tab--refresh-logs";
+		var widgetTracker = require('$:/plugins/EvidentlyCube/AdvancedPerformance/widget.js');
 
 		var onClickCapture = function(event) {
 			switch(event.target.getAttribute('data-ec-ap')) {
@@ -182,6 +183,17 @@ Cleans up data after a TaskList is removed
 
 			var dm = $tw.utils.domMaker;
 
+			var createWidgetsRow = function(header, value, title) {
+				var str = dm('strong', {text: header});
+				var val = dm('span', {
+					text: value,
+					class: title ? 'ec_ap-annotated' : '',
+					attributes: {title: title}
+				});
+				val.innerText = val.innerText || "0";
+				return str.outerHTML + "&nbsp;" + val.outerHTML;
+			};
+
 			createTable(
 				document.querySelector('#ec_ap--last-refreshes'),
 				[
@@ -229,6 +241,22 @@ Cleans up data after a TaskList is removed
 					{name: "State", getText: function(m) { return m.stateTiddlers; }},
 					{name: "System", getText: function(m) { return m.systemTiddlers; }},
 					{name: "Main", getText: function(m) { return m.mainTiddlers; }},
+					{name: "Widgets", getText: function(m) {
+						var createdWidgetsMap = m.widgets.createdWidgetNames.reduce(function(map, next) {
+							var oldCount = map.get(next) || 0;
+							map.set(next, oldCount + 1);
+							return map;
+						}, new Map());
+						var createdWidgets = Array.from(createdWidgetsMap.entries()).map(function(entry) {
+							return entry[0] + " x" + entry[1];
+						});
+						createdWidgets.sort();
+						return [
+							createWidgetsRow('Created', m.widgets.createdWidgetNames.length, createdWidgets.join("\n")),
+							createWidgetsRow('Rerendered', m.widgets.renderedWidgets.length, null),
+							createWidgetsRow('Refreshed', m.widgets.refreshedWidgetsCount, null),
+						].join("<br>");
+					}}
 				],
 				$tw.perf.refreshTimesHistory.reverse()
 			);
@@ -497,7 +525,8 @@ Cleans up data after a TaskList is removed
 				mainTiddlers: mainTiddlers,
 				totalTiddlers: totalTiddlers,
 				changedTiddlerNames: Object.keys(changes),
-				refreshTimes: refreshTimes
+				refreshTimes: refreshTimes,
+				widgets: widgetTracker.stats
 			});
 
 			document.querySelector('#ec_ap-last-refresh').innerText = time;
@@ -508,9 +537,13 @@ Cleans up data after a TaskList is removed
 			document.querySelector('#ec_ap-tiddlers-state').innerHTML = "State=" + stateTiddlers;
 			document.querySelector('#ec_ap-tiddlers-system').innerHTML = "System=" + systemTiddlers;
 			document.querySelector('#ec_ap-tiddlers-main').innerHTML = "Main=" + mainTiddlers;
+			document.querySelector('#ec_ap-widgets-created').innerHTML = widgetTracker.stats.createdWidgetNames.length;
+			document.querySelector('#ec_ap-widgets-rerendered').innerHTML = widgetTracker.stats.renderedWidgets.length;
+			document.querySelector('#ec_ap-widgets-refreshed').innerHTML = widgetTracker.stats.refreshedWidgetsCount;
 
 			// Clear current refresh times to avoid outdated `mainRender` polluting our logs
 			$tw.perf.resetRefreshTimes();
+			widgetTracker.clearStats();
 		});
 	};
 
