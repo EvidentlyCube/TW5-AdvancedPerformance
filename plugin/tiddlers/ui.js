@@ -30,22 +30,30 @@ Cleans up data after a TaskList is removed
 		var widgetTracker = require('$:/plugins/EvidentlyCube/AdvancedPerformance/widget.js');
 
 		var onClickCapture = function(event) {
-			switch(event.target.getAttribute('data-ec-ap')) {
+			var target = event.target;
+			var type = target.getAttribute('data-ec-ap');
+
+			while (!type && target) {
+				target = target.parentElement;
+				type = target ? target.getAttribute('data-ec-ap') : null;
+			}
+
+			switch(type) {
 				case 'show-details':
-					event.stopPropagation();
+					event.stopImmediatePropagation();
 					event.preventDefault();
 
 					isShowingDetails = true;
 					showDetails();
 					break;
 				case 'clear-data':
-					event.stopPropagation();
+					event.stopImmediatePropagation();
 					event.preventDefault();
 
 					clearPerfData();
 					break;
 				case 'close':
-					event.stopPropagation();
+					event.stopImmediatePropagation();
 					event.preventDefault();
 
 					isShowingDetails = false;
@@ -53,23 +61,27 @@ Cleans up data after a TaskList is removed
 					break;
 
 				case 'tab':
-					event.stopPropagation();
+					event.stopImmediatePropagation();
 					event.preventDefault();
 
-					selectedTab = event.target.getAttribute('data-for') || selectedTab;
+					selectedTab = target.getAttribute('data-for') || selectedTab;
 					refreshTabs();
 					break;
 
-				case 'filter-all':
-				case 'filter-limit':
-					// these are handled in onClick
-					break;
-			}
-		};
+				case 'filter-limit-label':
+					event.stopImmediatePropagation();
+					event.preventDefault();
 
-		var onClick = function(event) {
-			switch(event.target.getAttribute('data-ec-ap')) {
+					var input = document.querySelector('#' + target.htmlFor);
+
+					if (input) {
+						input.click();
+					}
+					break;
+
 				case 'filter-limit':
+					event.stopImmediatePropagation();
+
 					var selectedFilterCount = document.querySelectorAll('input[data-ec-ap="filter-limit"]:checked').length;
 
 					var all = document.querySelector('input[data-ec-ap="filter-all"]');
@@ -81,20 +93,28 @@ Cleans up data after a TaskList is removed
 					refreshFilterTabs();
 					break;
 				case 'filter-all':
-					var checked = !event.target.checked;
+					event.stopImmediatePropagation();
+
+					var checked = !target.checked;
 					document.querySelectorAll('input[data-ec-ap="filter-limit"]').forEach(function(checkbox) {
 						checkbox.checked = checked;
 					})
 					refreshFilterTabs();
 					break;
+
+				default:
+					if (isShowingDetails) {
+						event.stopImmediatePropagation();
+						event.preventDefault();
+					}
+					break;
 			}
 		};
 
-		document.querySelector('body').addEventListener('click', onClickCapture, true);
-		document.querySelector('body').addEventListener('click', onClick);
+		document.documentElement.addEventListener('click', onClickCapture, true);
 
 		var clearPerfData = function() {
-			event.stopPropagation();
+			event.stopImmediatePropagation();
 			event.preventDefault();
 
 			$tw.perf.measures = {};
@@ -224,7 +244,10 @@ Cleans up data after a TaskList is removed
 									text: '(' + filterCount + " filter"+(filterCount !== '1' ? 's' : '')+" executed)"
 								});
 
-								return dm('label', {children: [checkbox, text, text2], attributes: {'for': id}}).outerHTML;
+								return dm('label', {
+									children: [checkbox, text, text2],
+									attributes: {'for': id, 'data-ec-ap': 'filter-limit-label'}
+								}).outerHTML;
 							}).join("<br>");
 						}
 					},
