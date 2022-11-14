@@ -1,6 +1,7 @@
 title: $:/plugins/EvidentlyCube/AdvancedPerformance/history
 type: text/vnd.tiddlywiki
 
+* ''1.1.1'' -- Colors are now taken from the current palette so that it works with dark ones too
 * ''1.1.0'':
 ** Added option to filter the tables of filters to only show ones that run during specific refreshes
 ** Filters that run outside the defined refresh mechanism are now also counted and grouped as "other"
