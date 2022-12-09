@@ -7,7 +7,7 @@ After installing this plugin and enabling performance instrumentation (Control P
 ## Tips
 
 * Absolute gains are important. Optimizing **100ms** and **1ms** filter by 10% results in 10ms and 0.1ms improvement, respectively. The former is clearly better.
-    * But if the 1ms filter runs a hundred times per refresh it'll also net you **10ms** improvement.
+	* But if the 1ms filter runs a hundred times per refresh it'll also net you **10ms** improvement.
 * Keep in mind that some filters (notably `backlinks[]`) take a lot of time the first time they run, after which they are super fast. This makes **Total longest execution** imperfect without additional context.
 * Keep in mind you can move your mouse over **Total time (last 10)** to see the last 10 execution times for a filter.
 

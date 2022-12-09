@@ -14,7 +14,7 @@ Cleans up data after a TaskList is removed
 
 	// Export name and synchronous status
 	exports.name = "evidentlycube-adv-perf--footer";
-	exports.after = ["startup"];
+	exports.after = ["startup", "render"];
 	exports.synchronous = true;
 	exports.startup = function () {
 		if ($tw.node) {
@@ -162,7 +162,6 @@ Cleans up data after a TaskList is removed
 					}
 
 					$tw.utils.each(refreshTimes.filterLogs, function(logs, filterName) {
-						console.log(filterName, logs);
 						storeMeasure(filterName, logs);
 					});
 				});
