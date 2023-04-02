@@ -78,6 +78,9 @@ exports.startup = function() {
 		var self = this;
 		if(this.enabled) {
 			var storeLog = function(name, takenTime, measures) {
+				if (self.isInsideFilter) {
+					name = `~${name}`;
+				}
 				if(!(name in measures)) {
 					measures[name] = {
 						lastUse: 0,
@@ -85,6 +88,7 @@ exports.startup = function() {
 						shortestRun: Number.MAX_SAFE_INTEGER,
 						totalCalls: 0,
 						totalTime: 0,
+						isSub: self.isInsideFilter,
 						times: []
 					};
 				}
@@ -97,9 +101,16 @@ exports.startup = function() {
 			};
 
 			return function() {
-				var startTime = $tw.utils.timer(),
-					result = fn.apply(this,arguments),
-					takenTime = $tw.utils.timer(startTime);
+				var startTime = $tw.utils.timer();
+				var isInsideFilter = self.isInsideFilter || false;
+				if (!isInsideFilter) {
+					self.isInsideFilter = true;
+				}
+				var result = fn.apply(this,arguments);
+				if (!isInsideFilter) {
+					self.isInsideFilter = false;
+				}
+				var takenTime = $tw.utils.timer(startTime);
 
 				storeLog(name, takenTime, self.measures);
 				storeLog(name, takenTime, self.refreshTimes[self.currentRefreshName].filterLogs);

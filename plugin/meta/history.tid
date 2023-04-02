@@ -1,6 +1,7 @@
 title: $:/plugins/EvidentlyCube/AdvancedPerformance/history
 type: text/vnd.tiddlywiki
 
+* ''1.1.3'' -- Filters that run as subfilters are now explicitly marked in the tables.
 * ''1.1.2'' -- Fixed a bug where in certain situations, startup script loading order would cause performance tracking to be delayed by //one refresh//
 * ''1.1.1'' -- Colors are now taken from the current palette so that it works with dark ones too
 * ''1.1.0'':

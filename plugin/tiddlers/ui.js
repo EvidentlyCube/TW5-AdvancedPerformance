@@ -248,9 +248,10 @@ Cleans up data after a TaskList is removed
 
 				measures.push({
 					filterName: filterName
-						.replace(/^filter:\s*/, '')
+						.replace(/^~?filter:\s*/, '')
 						.replace(/</g, '&lt;')
 						.replace(/>/g, '&gt;'),
+					isSub: measure.isSub,
 					lastUse: measure.lastUse,
 					longestRun: measure.longestRun,
 					shortestRun: measure.shortestRun,
@@ -274,17 +275,36 @@ Cleans up data after a TaskList is removed
 			var averageLongest = measures.concat().sort(createSortByCallback(['average', 'lastUse']));
 			var medianLongest = measures.concat().sort(createSortByCallback(['median', 'lastUse']));
 
+			var filterNameColumn = {
+				name: 'Filter',
+				field: 'filterName',
+				getText: function (m) {
+					if (m.isSub) {
+						return `<small><em>Sub-filter: ${m.filterName}</em></small>`;
+					} else {
+						return m.filterName;
+					}
+				},
+				getTitle: function (m) {
+					return m.isSub
+						? "This was executed as a sub-filter to another filter. Sub-filter's time is included in the main filter's duration but the duration is not double counted for the 'Refresh logs' tab."
+						: '';
+				}
+			};
+
+			var totalTimeColumn = {
+				name: 'Total time (last 10)',
+				getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
+				getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
+			};
+
 			createTable(
 				document.querySelector('#ec_ap--most-used'),
 				[
-					{name: 'Filter', field: 'filterName'},
+					filterNameColumn,
 					{name: 'Uses', field: 'totalCalls' },
 					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
-					{
-						name: 'Total time (last 10)',
-						getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
-						getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
-					},
+					totalTimeColumn,
 					{name: 'Longest run', getText: function(m) { return m.longestRun.toFixed(2) + 'ms'; }},
 					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
 					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
@@ -295,15 +315,11 @@ Cleans up data after a TaskList is removed
 			createTable(
 				document.querySelector('#ec_ap--single-longest'),
 				[
-					{name: 'Filter', field: 'filterName'},
+					filterNameColumn,
 					{name: 'Longest run', getText: function(m) { return m.longestRun.toFixed(2) + 'ms'; }},
 					{name: 'Uses', field: 'totalCalls' },
 					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
-					{
-						name: 'Total time (last 10)',
-						getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
-						getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
-					},
+					totalTimeColumn,
 					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
 					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
 				],
@@ -313,14 +329,10 @@ Cleans up data after a TaskList is removed
 			createTable(
 				document.querySelector('#ec_ap--total-longest'),
 				[
-					{name: 'Filter', field: 'filterName'},
+					filterNameColumn,
 					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
 					{name: 'Uses', field: 'totalCalls' },
-					{
-						name: 'Total time (last 10)',
-						getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
-						getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
-					},
+					totalTimeColumn,
 					{name: 'Longest run', getText: function(m) { return m.longestRun.toFixed(2) + 'ms'; }},
 					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
 					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
@@ -335,11 +347,7 @@ Cleans up data after a TaskList is removed
 					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
 					{name: 'Uses', field: 'totalCalls' },
 					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
-					{
-						name: 'Total time (last 10)',
-						getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
-						getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
-					},
+					totalTimeColumn,
 					{name: 'Longest run', getText: function(m) { return m.longestRun.toFixed(2) + 'ms'; }},
 					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
 				],
@@ -353,11 +361,7 @@ Cleans up data after a TaskList is removed
 					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
 					{name: 'Uses', field: 'totalCalls' },
 					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
-					{
-						name: 'Total time (last 10)',
-						getText: function(m) { return m.totalTimeLastTen.toFixed(2) + 'ms'; },
-						getTitle: function(m) { return m.timesLastTen.map(function(x) { return x.toFixed(2) + 'ms'}).join("\n"); }
-					},
+					totalTimeColumn,
 					{name: 'Longest run', getText: function(m) { return m.longestRun.toFixed(2) + 'ms'; }},
 					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
 				],
@@ -388,8 +392,9 @@ Cleans up data after a TaskList is removed
 			var theadTr = dm("tr", {children: theadThs});
 			var tbodyTrs = measures.map(function(measure) {
 				var tds = headers.map(function(header) {
+					var title = header.getTitle ? header.getTitle(measure) : '';
 					var content = dm('span', {
-						class: header.getTitle ? 'ec_ap-annotated' : '',
+						class: title ? 'ec_ap-annotated' : '',
 						innerHTML: header.getText ? header.getText(measure) : measure[header.field],
 						attributes: {title: header.getTitle ? header.getTitle(measure) : ''}
 					});
