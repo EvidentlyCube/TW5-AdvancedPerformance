@@ -343,7 +343,7 @@ Cleans up data after a TaskList is removed
 			createTable(
 				document.querySelector('#ec_ap--average'),
 				[
-					{name: 'Filter', field: 'filterName'},
+					filterNameColumn,
 					{name: 'Average time', getText: function(m) { return m.average.toFixed(2) + 'ms'; }},
 					{name: 'Uses', field: 'totalCalls' },
 					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
@@ -357,7 +357,7 @@ Cleans up data after a TaskList is removed
 			createTable(
 				document.querySelector('#ec_ap--median'),
 				[
-					{name: 'Filter', field: 'filterName'},
+					filterNameColumn,
 					{name: 'Median time', getText: function(m) { return m.median.toFixed(2) + 'ms'; }},
 					{name: 'Uses', field: 'totalCalls' },
 					{name: 'Total time', getText: function(m) { return m.totalTime.toFixed(2) + 'ms'; }},
@@ -465,7 +465,7 @@ Cleans up data after a TaskList is removed
 				if (name === 'other') {
 					// Precalculate other's time taken because it contains all filters that run outside refreshes
 					refreshTimes[name].timeTaken = Object.values(data.filterLogs).reduce(function(total, measure) {
-						return total + measure.totalTime;
+						return total + (measure.isSub ? 0 : measure.totalTime);
 					}, 0);
 				}
 
