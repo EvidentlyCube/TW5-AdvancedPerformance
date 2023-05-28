@@ -1,6 +1,6 @@
 # Advanced Performance [TiddlyWiki5 Plugin]
 
-> :warning: **This repository has been moved**: To make development easier this plugin's code was moved to [EvidentlyCube/TW5-PluginShowcase](https://github.com/EvidentlyCube/TW5-PluginShowcase/tree/main), specifically [here](https://github.com/EvidentlyCube/TW5-PluginShowcase/tree/main/plugins/EvidentlyCube/TW5-TaskList) .
+> :warning: **This repository has been moved**: To make development easier this plugin's code was moved to [EvidentlyCube/TW5-PluginShowcase](https://github.com/EvidentlyCube/TW5-PluginShowcase/tree/main), specifically [here](https://github.com/EvidentlyCube/TW5-PluginShowcase/tree/main/plugins/EvidentlyCube/TW5-AdvancedPerformance) .
 
 Expand TiddlyWiki's performance instrumentation and make its results available directly in your wiki, without having to use developer console of the browser.
 
