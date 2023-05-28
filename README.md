@@ -1,5 +1,7 @@
 # Advanced Performance [TiddlyWiki5 Plugin]
 
+> :warning: **This repository has been moved**: To make development easier this plugin's code was moved to [EvidentlyCube/TW5-PluginShowcase](https://github.com/EvidentlyCube/TW5-PluginShowcase/tree/main), specifically [here](https://github.com/EvidentlyCube/TW5-PluginShowcase/tree/main/plugins/EvidentlyCube/TW5-TaskList) .
+
 Expand TiddlyWiki's performance instrumentation and make its results available directly in your wiki, without having to use developer console of the browser.
 
 After installing this plugin and enabling performance instrumentation (Control Panel -> Settings -> Performance Instrumentation) you'll see a ne widget sticked to the bottom of the page with various measurements. You can also click Show details to open a window with refresh and filter logs. Feel free to click it right now.
